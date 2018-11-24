@@ -35,8 +35,9 @@ function A1_exercises
     
     for m=1:M
         for o=1:O
+            #there are two options to do this:
             C(m,o)=sum(A(m,:).*B(:,o).');
-            #C(m,o)=sum(A(m,:)B(:,o));
+            #C(m,o)=A(m,:)*B(:,o);
         endfor
     endfor
     endfunction
@@ -60,21 +61,15 @@ function A1_exercises
     C_noloop=multiply_matrices_noloops(A,B);
     t(3) = toc;
   endfunction
-    
-    
-
-    
-
-
-
+  
   
   # init stuff:
   s=2:20; #calculating with s times s (sxs) matrices
   
   timeresults=zeros(3,size(s)(2));
   
-  #can compare matrices like this: mean(mean(abs(A-B))
-  mean_errors=zeros(3,size(s)(2));
+  #could compare matrices like this: max(max(abs(A-B))
+  max_diff=zeros(1,size(s)(2));
   
   for i=1:size(s)(2)
       s(i)
@@ -83,13 +78,28 @@ function A1_exercises
       O=s(i);
       A=rand(M,N)*10;
       B=rand(N,O)*10;
-      [timeresults(:,i),c3,c2,c0]=measure_execution_times(A,B);
+      [timeresults(:,i),C3,C2,C0]=measure_execution_times(A,B);
+      
+      #compare results of 3loop-matrix (C3) and noloop-matrix(C0)
+      # what is the maximum differenz between them?
+      diff_c3_c0 = max(max(abs(C0-C3)));
+      
+      #compare results of 2loop-matrix (C2) and noloop-matrix(C0)
+      diff_c2_c0 = max(max(abs(C0-C2)));
+      
+      max_diff(i)= max([diff_c3_c0,diff_c2_c0]);
+      
   endfor
   
-  plot(s,timeresults(:,:))
+  subplot(1, 2, 1)
+  plot(s,timeresults(:,:));
+  xlabel ("Size, S, of multiplied matrices, SxS");
+  ylabel ("Computing time in seconds");
+  legend("3 loops","2 loops","no loops");
   
+  subplot (1, 2, 2)
+  plot(s,max_diff);
+  xlabel("Size of multiplied matrices");
+  ylabel ("Highest difference between all results");
   
-
-
-
 endfunction
