@@ -41,7 +41,7 @@ function A1_exercises
         endfor
     endfor
     endfunction
-    
+        
   function C = multiply_matrices_noloops(A,B)
         C=A*B;  
   endfunction
