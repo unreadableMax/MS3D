@@ -39,8 +39,8 @@ function A2_exercises
       
       B=repmat(B,n,1);
       
-      repIndexY=ones(m,n).*[1:n];
-      A=A(repIndexY,:);
+      special_index_vec=ones(m,n).*[1:n];
+      A=A(special_index_vec,:);
       
       diff=A-B;
       
@@ -66,7 +66,6 @@ function A2_exercises
     
   endfunction
  
-  # init stuff:
   s=2:1:50; #calculating with s times s (sxs) matrices
   
   timeresults =  zeros(2,size(s)(2));
@@ -93,6 +92,5 @@ function A2_exercises
   plot(s,d(1,:)-d(2,:));
   xlabel("Size of clouds A & B");
   ylabel ("Difference d1-d2 between both results");
-  
   
 endfunction
