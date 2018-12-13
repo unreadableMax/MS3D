@@ -39,10 +39,8 @@ function A2_exercises
         
         % Lets reset the neighbourhood to an empty vector
         neighbouring_values = [];
-        
         % Get each value within the neighbourhood into a vector
-        for x = -neighbourhood_radius:neighbourhood_radius
-        
+        for x = -neighbourhood_radius:neighbourhood_radius 
              % Add this values to the neighbourhood (Directly take the part of the row we need)
              neighbouring_values = [neighbouring_values, extended_img(i+x,(j-neighbourhood_radius):(j+neighbourhood_radius)) ];
             
@@ -64,7 +62,7 @@ function A2_exercises
   salty_peppered_img = salt_and_pepper(grey_img,0.05,0.05);
   
   % "3. Convolve the image with your median filter."
-  neighbourhood_radius_without_self = 1;
+  neighbourhood_radius_without_self = 100;
   result_1 = uint8(convolve_with_median(salty_peppered_img,neighbourhood_radius_without_self));
   
   % "4. Convolve the image with the built-in Octave median filter."
