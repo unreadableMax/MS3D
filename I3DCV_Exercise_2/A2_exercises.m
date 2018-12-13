@@ -1,94 +1,89 @@
 function A2_exercises
   
-  % Exercise (i) Function Adding salt and pepper
-  % Parameters are the image and the probability of a pixel to be salt or pepper
-  % rel_amount_salt + rel_amount_pepper should be lower than 1
-  function new_image = salt_and_pepper( img, rel_amount_salt, rel_amount_pepper)
-    
-    new_image = img;
+  # add salt and pepper to an imput img
+  function res = salt_and_pepper( img, pepp_factor,salt_factor)
+    res = img;
     random_values = rand(size(img)(1),size(img)(2));
-    
-    % Adding salt
-    new_image(random_values < rel_amount_salt) = 255;
-    % Adding pepper
-    new_image(random_values > (1-rel_amount_pepper)) = 0;
-
+    res(random_values < salt_factor) = 255;
+    res(random_values > (1-pepp_factor)) = 0;
   endfunction
 
-  % Exercise (ii) Own median filter without built-in median filter
-  % Note the radius DOES not include the own value
-  function new_image = convolve_with_median(img, neighbourhood_radius)
+  # nice to clean up a noisy picture 
+  function res = convolve_with_median(img, conv_rad)
     
-    new_image = zeros(size(img));
-    % Note: We are still supposed to use zero-padding, so
-    extended_img = zeros(size(img)+2*neighbourhood_radius);
-    % Not important code, but it makes things clearer
-    img_rows = size(img)(1);
-    img_cols = size(img)(2);
-    start_index = neighbourhood_radius+1; 
-    end_index_rows = (neighbourhood_radius+img_rows);
-    end_index_cols = (neighbourhood_radius+img_cols);
+    # allocate result image:
+    res = zeros(size(img));
     
-    % Add the zeros
-    extended_img(start_index:end_index_rows,start_index:end_index_cols) = img;
+    # alloc greater img with black border:
+    img_border = zeros(size(img)+2*conv_rad);
+    
+    rows = size(img)(1);
+    collums = size(img)(2);
+    start_index = conv_rad+1; 
+    end_index_rows = (conv_rad+rows);
+    end_index_cols = (conv_rad+collums);
+    
+    img_border(start_index:end_index_rows,start_index:end_index_cols) = img;
     
     % Search for the median value within the neighbourhood of each pixel
-    % This is a simple, non-optimized solution with loops
-    for i = start_index:end_index_rows % for each row...
-      for j = start_index:end_index_cols % ...and each col
+    for i = start_index:end_index_rows 
+      for j = start_index:end_index_cols
         
-        % Lets reset the neighbourhood to an empty vector
-        neighbouring_values = [];
-        % Get each value within the neighbourhood into a vector
-        for x = -neighbourhood_radius:neighbourhood_radius 
-             % Add this values to the neighbourhood (Directly take the part of the row we need)
-             neighbouring_values = [neighbouring_values, extended_img(i+x,(j-neighbourhood_radius):(j+neighbourhood_radius)) ];
+        % reset neighbourhood to an empty vector
+        neighborhood = [];
+        
+        for x = -conv_rad:conv_rad 
+             % Add to the neighbourhood (Directly take the part of the row we need)
+             neighborhood = [neighborhood, img_border(i+x,(j-conv_rad):(j+conv_rad)) ];
             
         endfor
 
-        % Now save the median from this neighbourhood into the image
-        new_image(i-neighbourhood_radius,j-neighbourhood_radius) = median(neighbouring_values);
+        % save median from neighbourhood 
+        res(i-conv_rad,j-conv_rad) = median(neighborhood);
            
       endfor
     endfor
     
   endfunction
+  
+  # load image pkg 
+  pkg load image
 
-  % "1. Load your image of choise and convert it into greyscale."
-  colored_img = imread('image.png');
-  grey_img = rgb2gray(colored_img);
-
-  % "2. Introduce salt and pepper noise."
-  salty_peppered_img = salt_and_pepper(grey_img,0.05,0.05);
+  # load image:
+  img = imread('image.png');
+  grey_img = rgb2gray(img);
   
-  % "3. Convolve the image with your median filter."
-  neighbourhood_radius_without_self = 100;
-  result_1 = uint8(convolve_with_median(salty_peppered_img,neighbourhood_radius_without_self));
+  # add some salt and pepper:
+  salty_img = salt_and_pepper(grey_img,0.1,0.1);
   
-  % "4. Convolve the image with the built-in Octave median filter."
-  % We are using a rectangular filter-kernel again:
-  result_2 = medfilt2(salty_peppered_img,ones(2*neighbourhood_radius_without_self+1));
+  # set convolution radius here:
+  conv_rad = 2;
   
-  % "5. Assert that these two are equal."
-  if result_1 == result_2 
-    disp("The results are the same")
+  # use our own median function:
+  res_a = uint8(convolve_with_median(salty_img,conv_rad));
+  
+  # use the oracle-function:
+  res_b = medfilt2(salty_img,ones(2*conv_rad+1));
+  
+  #compare results:
+  if res_a == res_b 
+    disp("ok, same results")
   else
-    disp("The results are not the same!")
+    disp("ERROR: different results!")
   endif
 
-  % "6. Plot the original image, the image with salt and pepper noise, [etc.]"
-  figure(1)
+   #plot the hole think:
   subplot(2,2,1);
   imshow(grey_img);
   
   subplot(2,2,2);
-  imshow(salty_peppered_img);
+  imshow(salty_img);
   
   subplot(2,2,3);
-  imshow(result_1);
+  imshow(res_a);
 
   subplot(2,2,4);
-  imshow(result_2);
+  imshow(res_b);
   
   print('A2_results.png');
   
