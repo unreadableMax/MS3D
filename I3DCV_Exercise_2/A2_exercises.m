@@ -7,88 +7,78 @@ function A2_exercises
     random_salt = rand(size(img)(1),size(img)(2));
     random_pepper = rand(size(img)(1),size(img)(2));
     
+    %generate salt and pepper masks:
     salt_mask = (random_salt < salt_chance);
-    salted_peppered_img(salt_mask) = 255;
+    pepper_mask = (random_pepper < salt_chance);
     
-    peper_mask = (random_pepper < salt_chance);
-    salted_peppered_img(peper_mask) = 0;
+    %us masks to salt and pepper the img:
+    salted_peppered_img(salt_mask) = 255;
+    salted_peppered_img(pepper_mask) = 0;
 
   endfunction
 
-  % Exercise (ii) Own median filter without built-in median filter
-  % Note the radius DOES not include the own value
-  function res_img = convolve_with_median(img, neighbourhood_radius)
+  function res_img = convolve_with_median(img, r)
     
     res_img = zeros(size(img));
-    % Note: We are still supposed to use zero-padding, so
-    extended_img = zeros(size(img)+2*neighbourhood_radius);
-    % Not important code, but it makes things clearer
-    img_rows = size(img)(1);
-    img_cols = size(img)(2);
-    start_index = neighbourhood_radius+1; 
-    end_index_rows = (neighbourhood_radius+img_rows);
-    end_index_cols = (neighbourhood_radius+img_cols);
+    img_with_frame = zeros(size(img)+2*r);
     
-    % Add the zeros
-    extended_img(start_index:end_index_rows,start_index:end_index_cols) = img;
+    start_index = r+1; 
+    end_index_y = (r+size(img)(1));
+    end_index_x = (r+size(img)(2));
     
-    % Search for the median value within the neighbourhood of each pixel
-    % This is a simple, non-optimized solution with loops
-    for i = start_index:end_index_rows % for each row...
-      for j = start_index:end_index_cols % ...and each col
+    img_with_frame(start_index:end_index_y,start_index:end_index_x) = img;
+    
+    for y = start_index:end_index_y 
+      for x = start_index:end_index_x
         
-        % Lets reset the neighbourhood to an empty vector
-        neighbouring_values = [];
-        % Get each value within the neighbourhood into a vector
-        for x = -neighbourhood_radius:neighbourhood_radius 
-             % Add this values to the neighbourhood (Directly take the part of the row we need)
-             neighbouring_values = [neighbouring_values, extended_img(i+x,(j-neighbourhood_radius):(j+neighbourhood_radius)) ];
-            
+        % searching neighbors and store them indo a vector:
+        neighbours = [];
+        for i = -r:r 
+             neighbours = [neighbours, img_with_frame(y+i,(x-r):(x+r)) ];
         endfor
 
-        % Now save the median from this neighbourhood into the image
-        res_img(i-neighbourhood_radius,j-neighbourhood_radius) = median(neighbouring_values);
+        % Now apply octaves median-function on our neighbours:
+        res_img(y-r,x-r) = median(neighbours);
            
       endfor
     endfor
     
   endfunction
+  
+  pkg load image
 
-  % "1. Load your image of choise and convert it into greyscale."
-  colored_img = imread('image.png');
-  grey_img = rgb2gray(colored_img);
+  % load original image:
+  img = imread('image.png');
+  img = rgb2gray(img);
 
-  % "2. Introduce salt_mask and pepper noise."
-  salty_peppered_img = salt_and_pepper(grey_img,0.05,0.05);
+  noisy_image = salt_and_pepper(img,0.1,0.06);
   
-  % "3. Convolve the image with your median filter."
-  neighbourhood_radius_without_self = 3;
-  result_1 = uint8(convolve_with_median(salty_peppered_img,neighbourhood_radius_without_self));
+  r = 1;
+  own_median_filter_res = uint8(convolve_with_median(noisy_image,r));
   
-  % "4. Convolve the image with the built-in Octave median filter."
-  % We are using a rectangular filter-kernel again:
-  result_2 = medfilt2(salty_peppered_img,ones(2*neighbourhood_radius_without_self+1));
+  mask = ones(2*r+1);
+  medfilt2_res = medfilt2(noisy_image,mask);
   
-  % "5. Assert that these two are equal."
-  if result_1 == result_2 
-    disp("The results are the same")
+  if own_median_filter_res == medfilt2_res 
+    disp("both results are equal")
   else
-    disp("The results are not the same!")
+    disp("res1 != res2")
+    return
   endif
 
-  % "6. Plot the original image, the image with salt_mask and pepper noise, [etc.]"
+  % plot all the stuff:
   figure(1)
   subplot(2,2,1);
-  imshow(grey_img);
+  imshow(img);
   
   subplot(2,2,2);
-  imshow(salty_peppered_img);
+  imshow(noisy_image);
   
   subplot(2,2,3);
-  imshow(result_1);
+  imshow(own_median_filter_res);
 
   subplot(2,2,4);
-  imshow(result_2);
+  imshow(medfilt2_res);
   
   print('A2_results.png');
   
