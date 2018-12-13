@@ -1,25 +1,25 @@
 function A2_exercises
-  
-  % Exercise (i) Function Adding salt and pepper
-  % Parameters are the image and the probability of a pixel to be salt or pepper
-  % rel_amount_salt + rel_amount_pepper should be lower than 1
-  function new_image = salt_and_pepper( img, rel_amount_salt, rel_amount_pepper)
+ 
+  function salted_peppered_img = salt_and_pepper( img, salt_chance, pepper_chance)
     
-    new_image = img;
-    random_values = rand(size(img)(1),size(img)(2));
+    salted_peppered_img = img;
     
-    % Adding salt
-    new_image(random_values < rel_amount_salt) = 255;
-    % Adding pepper
-    new_image(random_values > (1-rel_amount_pepper)) = 0;
+    random_salt = rand(size(img)(1),size(img)(2));
+    random_pepper = rand(size(img)(1),size(img)(2));
+    
+    salt_mask = (random_salt < salt_chance);
+    salted_peppered_img(salt_mask) = 255;
+    
+    peper_mask = (random_pepper < salt_chance);
+    salted_peppered_img(peper_mask) = 0;
 
   endfunction
 
   % Exercise (ii) Own median filter without built-in median filter
   % Note the radius DOES not include the own value
-  function new_image = convolve_with_median(img, neighbourhood_radius)
+  function res_img = convolve_with_median(img, neighbourhood_radius)
     
-    new_image = zeros(size(img));
+    res_img = zeros(size(img));
     % Note: We are still supposed to use zero-padding, so
     extended_img = zeros(size(img)+2*neighbourhood_radius);
     % Not important code, but it makes things clearer
@@ -47,7 +47,7 @@ function A2_exercises
         endfor
 
         % Now save the median from this neighbourhood into the image
-        new_image(i-neighbourhood_radius,j-neighbourhood_radius) = median(neighbouring_values);
+        res_img(i-neighbourhood_radius,j-neighbourhood_radius) = median(neighbouring_values);
            
       endfor
     endfor
@@ -58,11 +58,11 @@ function A2_exercises
   colored_img = imread('image.png');
   grey_img = rgb2gray(colored_img);
 
-  % "2. Introduce salt and pepper noise."
+  % "2. Introduce salt_mask and pepper noise."
   salty_peppered_img = salt_and_pepper(grey_img,0.05,0.05);
   
   % "3. Convolve the image with your median filter."
-  neighbourhood_radius_without_self = 100;
+  neighbourhood_radius_without_self = 3;
   result_1 = uint8(convolve_with_median(salty_peppered_img,neighbourhood_radius_without_self));
   
   % "4. Convolve the image with the built-in Octave median filter."
@@ -76,7 +76,7 @@ function A2_exercises
     disp("The results are not the same!")
   endif
 
-  % "6. Plot the original image, the image with salt and pepper noise, [etc.]"
+  % "6. Plot the original image, the image with salt_mask and pepper noise, [etc.]"
   figure(1)
   subplot(2,2,1);
   imshow(grey_img);
