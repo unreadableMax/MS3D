@@ -1,0 +1,104 @@
+\documentclass[fontsize=13pt,a4paper]{article}
+
+% Use UTF-8 encoding in this document. If the LaTeX compiler complains
+% use utf8x instead.
+\usepackage[utf8]{inputenc}
+
+% American Mathematical Society packages for various
+% mathematical symbols and environments taken for granted.
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+% Compatible with KOMA script whereas fancyhdr is not
+\usepackage{scrlayer-scrpage}
+\pagestyle{scrheadings}
+
+\clearscrheadfoot
+\lehead[]{Exercise 3 -- Point clouds}
+\lohead[]{Exercise 3 -- Point clouds}
+\rehead[]{Due to January 17th, a Thursday}
+\rohead[]{Due to January 17th, a Thursday}
+
+\begin{document}
+
+\section{Point-clouds}
+
+\subsection{Loading space separated ascii files}
+
+\begin{itemize}
+    \item[(i)]
+        Load the file \emph{sandhausen\_sample.xyz},
+        kindly provided by Katharina Anders, into Octave
+        and visualize the point cloud. Color each point in your
+        visualization by its position on the z-axis.
+
+    \item[(ii)]
+        Write the result of your visualization to file named
+        \emph{A1\_result.png}.
+\end{itemize}
+
+\subsection{Obtaining a Digital Terrain Model from a Digitial Surface Model}
+
+\begin{itemize}
+    \item[(i)] The transformation presented here, obtaining a
+        digitial terrain model (DTM), is closely related to the
+        non-maximum suppression. For each point, determine whether
+        in its neighbourhood it is the lowest point, i.e. has the lowest
+        value on the z-axis.
+
+        Let $p, q \in P$ denote two points in a point-cloud $P \in \mathbb{R}^3$.
+        Let $\vec{z} = [0, 0, -1]$ be a vector pointing in the direction
+        of the ground. Let $\vec{g} = [1, 1, 0]$ be a vector denoting the
+        ground plane. Let $\langle \cdot, \cdot \rangle$ denote the
+        the dot product, i.e. projection of a vector.
+        Let $\lambda$ be a threshold denoting the
+        amount of detail you want to extract.
+        Then, a point $p$ is in the DTM point-cloud $\hat{P}$ only if the
+        following holds.
+
+        \begin{equation}
+\hat{P} = \{p \; | \; \forall p, q \in P:
+    \|\langle p, \vec{g} \rangle -
+        \langle q, \vec{g} \rangle\| < \lambda \textbf{ and }
+                    \langle p, \vec{z} \rangle > \langle q, \vec{z} \rangle \}
+        \end{equation}
+
+    \item[(ii)] Implement the procedure outlined above. Make sure
+        to vectorize your implementation where possible.
+
+    \item[(iii)] Visualize the point cloud, again coloring points by
+        their position on the z-axis, after being processed to extract
+        the DTM. Experiment with at least 3 values for $\lambda$.
+        Save your plots to files named
+        \emph{A2\_result1.png, A2\_result2.png and A2\_result3.png}.
+\end{itemize}
+
+\newpage
+
+\subsection{Send me Your Results}
+
+\begin{itemize}
+    \item [(i)] Compress your results into a zip file
+    with the following file structure.
+
+    \begin{verbatim}
+        I3DCV_<matriculation number>_Exercise_3.zip
+            |
+            |- I3DCV_<matriculation number>_Exercise_3
+                |
+                |- sandhausen_sample.xyz
+                |- A1_exercises.m
+                |- A1_result.png
+                |- A2_exercises.m
+                |- A2_result1.png
+                |- A2_result2.png
+                |- A2_result3.png
+    \end{verbatim}
+
+    \item [(ii)] Send me an email containing "[3DCV] Exercise 3"
+    in the subject line with your zip file attached. My email address
+    is \emph{bartosz.bogacz@iwr.uni-heidelberg.de}.
+\end{itemize}
+
+\end{document}
