@@ -11,7 +11,7 @@ function A2_exercises
   % Let ? be a threshold denoting the amount of detail you want to extract.
   % Then, a point p is in the DTM point-cloud ˆ P only if the following holds.
   % ˆP = {p |?p,q ? P : ||<p,~g> - <q,~g>|| < ? and <p,~z> > <q,~z>}
-  function DTM_points = getDTM(dataset_P, detail_threshold_lambda)
+  function DTM_points = getDTM(dataset_P, detail_threshold_lambda, neighbourhood_radius)
   
     % Attempt: We want to keep all points that fulfill 
     % the condition described by the description above:
@@ -45,67 +45,94 @@ function A2_exercises
       disp("Wrong dimensions. dataset_P must be n x 3");
       return
     endif
-    
-    % "initialization
+  
+    %"Initializing" ^P 
     DTM_points = [];
   
-    % g like described in the task
-    % g gets allocated with the size of P because it gets compared with every 
-    % point of P later
-    g = zeros(size(dataset_P));
-    g += [1,1,0];
+    % For better understanding...
+    x = dataset_P(:,1);
+    y = dataset_P(:,2);
+  
+    % g and z like described in the task
+    g = [1,1,0];
+    z = [0,0,-1];
+    
+    % For output of the progress
+    next_milestone = length(x)/10;
   
     % We'll check each point p in dataset_P (optimizing later)
-    for i=1:size(dataset_P,1)
+    for i=1:length(x)
     
-      % p is the point we are currently checking 
-      p = zeros(size(dataset_P));
-      p += dataset_P(i,:);
+      % p is the point we are currently checking
+      p = dataset_P(i,:);
     
-      % First condition is true where difference between the dot product between 
-      % p and g and the dot product between P and g is below lambda 
-      % First condition is true where we can consider a point of P to be a 
-      % "neighbour" of p 
-      first_condition = abs( dot(p,g,2) - dot(dataset_P,g,2) ) <= detail_threshold_lambda;  
+      % Get the points with the neighbourhood of p. 
+      % We could check every other point as q, but that would be too much i guess
+      % Task says this is "closely related to the non-maximum suppression",
+      % so let's work with a neighbourhood here
+      % "q is from dataset_P where dataset_P.x and dataset_P.y are around p in 
+      % a circle with r = neighbourhood_radius
+      is_close = ( ((x-p(1)).*(x-p(1)) + (y-p(2)).*(y-p(2)) ) <= neighbourhood_radius*neighbourhood_radius);
+      % Remove p from the values
+      is_close(i) = 0;
+      % Collect neighbourhood
+      q = dataset_P( is_close, : );
       
-      % p is not a neighbour of p
-      first_condition(i) = 0;
+      % Now lets check if the describend conditions hold true for all q
+      % is it false for one time, p shall not transferred into DTM_points
+      p_is_okay = true;
+    
+      for j=1:size(q,1)
+        % These were our conditions
+        first_condition = abs( dot(p,g) - dot(q(j,:),g) ) <= detail_threshold_lambda;
+        second_condition = dot(p,z) > dot(q(j,:),z);
       
-      % Collect every point for which this condition holds true in q
-      % "q is where a point in P is considered a neighbour of P"
-      q = dataset_P(first_condition,:);
-     
-      % z like described in the task
-      % z gets allocated with the size of q because it gets compared with every 
-      % point of q 
-      z = zeros(size(q));
-      z += [0,0,-1];
+        % if first condition or second condition is false, not all requirements are met
+        if not(first_condition) || not(second_condition)
+          % Youre fired, bye
+          p_is_okay = false;
+        endif
+      endfor
+    
+      % now lets add all p that are okay
+      if p_is_okay 
+        DTM_points = [DTM_points; p];
+      endif
       
-      % Same for p, the sizes must match
-      p = zeros(size(q));
-      p += dataset_P(i,:);
-      
-      % Second condition is true where the dot product between p and z is higher
-      % than the dot product between q and z 
-      % Second condition is true where the z height of p is below the z height of q
-      second_condition = dot(p,z,2) > dot(q,z,2);
-      
-      % p is part of P' if it is smaller than EVERY other point in q
-      % if "second_condition" only has Ones in it
-      if sum(second_condition) == length(second_condition)  
-        DTM_points = [DTM_points; dataset_P(i,:)];
+      % Just to let know how much the progress is without needing to interrupt 
+      % the process by debugging - depending on the parameters the script can take a
+      % while
+      if i/length(x) > next_milestone
+        next_milestone += length(x)/10;
+        disp("Progress of processing the DTM:")
+        disp(i/(length(x)*100))
       endif
  
     endfor
   
   endfunction
 
-  % Exercise 2 (iii)
+  % Exercise 2 (i)
   data_sandhausen = load("sandhausen_sample.xyz","ascii");
   % Cant process all points (causing some buffer problems) so we cut the data
   data_sandhausen = data_sandhausen(1:10:length(data_sandhausen),:);
   
-  % Approach 1 for grid mesh:
+  % Get the points for the DTM
+  lambda = 1.2;
+  neighbourhood = 5; %0.5
+  P = getDTM(data_sandhausen,lambda,neighbourhood);
+
+  figure(1);
+  % Plot to compare the result to the point cloud
+  scatter3(data_sandhausen(:,1), data_sandhausen(:,2), data_sandhausen(:,3), 10);
+  
+  figure(2);
+  % The current result as point cloud
+  scatter3(P(:,1), P(:,2), P(:,3), 10);
+  
+  figure(3);
+  
+  % Approach 1:
   % Grid derived from data:
   %[X_unsorted, Y_unsorted] = meshgrid(P(:,1),P(:,2));
     
@@ -124,11 +151,11 @@ function A2_exercises
   y_number_values = 50;
   % We need to get the values on the edge of the model
   % Lowest and highest X:
-  x_min = min(data_sandhausen(:,1));
-  x_max = max(data_sandhausen(:,1));
+  x_min = min(P(:,1));
+  x_max = max(P(:,1));
   % Lowest and highest Y:
-  y_min = min(data_sandhausen(:,2));
-  y_max = max(data_sandhausen(:,2));
+  y_min = min(P(:,2));
+  y_max = max(P(:,2));
   % Now make x_length values between x_min and x_max as well as for y:
   x_delta = (x_max-x_min)/(x_number_values-1);
   y_delta = (y_max-y_min)/(y_number_values-1);
@@ -137,46 +164,9 @@ function A2_exercises
   % Now make the desired mesh
   [X, Y] = meshgrid(x,y);
   
-    % Making a subplot with 7 graphs, with a Point cloud before DTM as well as
-  % a Point cloud after DTM and as mesh for each of 3 chosen lambda values
-  figure(1);
-  
-  % Plot to compare the result to the point cloud
-  subplot(2,2,1);
-  scatter3(data_sandhausen(:,1), data_sandhausen(:,2), data_sandhausen(:,3), 10);
-  title("Sandhausen Pointcloud before DTM");
-  
-  % Calculate the DTM pointcloud for each value of lambda and plot it 
-  subplot(2,2,2);
-  P1 = getDTM(data_sandhausen,0.35);
-  scatter3(P1(:,1), P1(:,2), P1(:,3), 10);
-  title("Pointcloud after DTM with lambda = 0,35");
- 
-  subplot(2,2,3);
-  P2 = getDTM(data_sandhausen,0.15);
-  scatter3(P2(:,1), P2(:,2), P2(:,3), 10);
-  title("Pointcloud after DTM with lambda = 0,15");
-  
-  subplot(2,2,4);
-  P3 = getDTM(data_sandhausen,0.06);
-  scatter3(P3(:,1), P3(:,2), P3(:,3), 10);
-  title("Pointcloud after DTM with lambda = 0,06");
-  
   % The result now as a mesh model by converting the actual x,y values into
   % the grid's resolution and interpolating the correspondong z values
-  figure(2);
-  Z = griddata(P1(:,1),P1(:,2),P1(:,3),X,Y);
+  Z = griddata(P(:,1),P(:,2),P(:,3),X,Y);
   surf(X,Y,Z);
-  title("DTM mesh with lambda = 0.35");
-  
-  figure(3);
-  Z = griddata(P2(:,1),P2(:,2),P2(:,3),X,Y);
-  surf(X,Y,Z);
-  title("DTM mesh with lambda = 0.15");
-   
-  figure(4);
-  Z = griddata(P3(:,1),P3(:,2),P3(:,3),X,Y);
-  surf(X,Y,Z);
-  title("DTM mesh with lambda = 0.06");
 
 endfunction
